@@ -1,0 +1,76 @@
+﻿@page "/vmtest1"
+
+@using BlazorAppMVVMExample1.Data
+@inject WeatherForecastService ForecastService
+@inject ViewModel ViewModel
+@using System.ComponentModel;
+@implements IDisposable
+
+<CascadingValue Value=@ViewModel Name="ViewModel2"></CascadingValue>
+
+<h1>ViewModel Test 1</h1>
+
+@if (@ViewModel.List == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (loadFailed)
+{
+    <h1>Sorry, we could not load this product due to an error.</h1>
+}
+else
+{
+    <div class="container">
+        <div class=@ViewModel.IsBusySpinner role="status" style="display: table-cell; vertical-align: middle"></div>
+    </div>
+    <br />
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Item value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var list in @ViewModel.List)
+            {
+                <tr>
+                    <td>@list</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private bool loadFailed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ViewModel.PropertyChanged += async (sender, e) =>
+        {
+            await InvokeAsync(() =>
+            {
+                StateHasChanged();
+            });
+        };
+        await base.OnInitializedAsync();
+
+        if (!ViewModel.IsBusy)
+        {
+            _ = Task.Factory.StartNew(ViewModel.AddItems);
+        }
+    }
+
+    async void OnPropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnPropertyChangedHandler;
+    }
+}
